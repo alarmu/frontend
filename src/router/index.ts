@@ -37,10 +37,9 @@ const router = createRouter({
           },
         },
         {
-          path: '/:id',
+          path: ':id',
           name: ROUTE_NAMES.Alarm,
           component: AlarmEdit,
-          props: true,
           meta: {
             requiresAuth: true
           },

@@ -1,4 +1,3 @@
-vue
 <template>
   <div>
     <div class="header">
@@ -10,12 +9,12 @@ vue
 
     <div class="alarms">
       <AlarmItem
-        v-for="(alarm, index) in alarms"
-        :key="index"
+        v-for="alarm in alarms"
+        :key="alarm.id"
         :time="alarm.time"
-        :label="alarm.label"
+        :label="alarm.label ?? undefined"
         :active="alarm.active"
-        @update:active="(value) => updateAlarm(index, value)"
+        @update:active="(value) => updateAlarm(alarm.id, value)"
       />
     </div>
   </div>
@@ -38,26 +37,17 @@ vue
   gap: 10px;
 }
 </style>
-<script lang="ts">
+<script lang="ts" setup>
 import AlarmItem from '@/components/AlarmItem.vue'
+import { useAppStore } from '@/stores/app'
+import { computed } from 'vue'
 
-interface AlarmsData {
-  alarms: Alarm[]
-}
+const store = useAppStore()
+const alarms = computed(() => store.alarms)
 
-export default {
-  components: {
-    AlarmItem,
-  },
-  data(): AlarmsData {
-    return {
-      alarms: [],
-    }
-  },
-  methods: {
-    updateAlarm(index: number, value: boolean) {
-      this.alarms[index].active = value
-    },
-  },
+store.getAlarms()
+
+const updateAlarm = (id: string, value: boolean) => {
+  store.setAlarmState(id, value);
 }
 </script>

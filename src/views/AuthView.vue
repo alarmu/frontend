@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { set, useTitle } from '@vueuse/core'
+import { useTitle } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { ROUTE_NAMES } from '@/router'
 import axios from 'axios'
 import VSpinner from '@/components/VSpinner.vue'
 
-useTitle('Авторизация')
+useTitle('Login')
 
 const { login, isCodeSent, setIsCodeSent } = useAuthStore()
 

@@ -1,17 +1,22 @@
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import api from '@/api'
+import type { Alarm } from '@/types'
 
-export const useAppStore = defineStore('app', () => {
-  const alarms = ref<Alarm[]>([])
+export const useAppStore = defineStore('app',{
+  state: () => {
+    return {
+      alarms: [] as Alarm[],
+    }
+  },
+  actions: {
+    async getAlarms()  {
+      this.alarms = await api.getAlarms()
+    },
+    async setAlarmState(id: string, state: boolean)  {
+      const alarmIndex = this.alarms.findIndex((x) => x.id === id)
+      this.alarms[alarmIndex].active = state
 
-  const getAlarms = async () => {
-    try {
-      alarms.value = await api.getAlarms()
-    } catch (error) {
-      return error
+      // await api.getAlarms()
     }
   }
-
-  return { alarms, getAlarms }
 })

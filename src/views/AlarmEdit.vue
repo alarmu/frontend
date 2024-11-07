@@ -1,32 +1,84 @@
-vue
 <template>
   <div>
-    <h1>Edit Alarm</h1>
-    <form @submit.prevent="saveAlarm">
+    <router-link :to="{ name: ROUTE_NAMES.Alarms }" class="back">← Back to Alarms List</router-link>
+    <div class="header">
+      <h1>Alarm</h1>
+      <div class="buttons">
+        <button class="button" v-if="alarm">Delete</button>
+      </div>
+    </div>
+    <form @submit.prevent="saveAlarm" v-if="alarm">
       <label for="time">Alarm Time:</label>
       <input type="time" v-model="alarm.time" required />
       <button type="submit">Save</button>
     </form>
-    <router-link to="/">Back to Alarms List</router-link>
+    <VSpinner v-if="loading"></VSpinner>
+    <p v-if="!loading && !alarm">Alarm not found</p>
   </div>
 </template>
 
 <script lang="ts">
+import { ROUTE_NAMES } from '@/router'
+import api from '@/api'
+import type { Alarm } from '@/types'
+import VSpinner from '@/components/VSpinner.vue'
+
+interface AlarmEditData {
+  alarm: Alarm | null
+  loading: boolean
+}
+
 export default {
-  props: ['id'],
-  data() {
+  components: { VSpinner },
+  computed: {
+    ROUTE_NAMES() {
+      return ROUTE_NAMES
+    },
+  },
+  mounted() {
+    this.loading = true
+    api
+      .getAlarm(this.$route.params.id as string)
+      .then((alarm) => {
+        this.alarm = alarm
+      })
+      .finally(() => {
+        this.loading = false
+      })
+  },
+  data(): AlarmEditData {
     return {
-      alarm: {
-        id: this.id,
-        time: '07:00 AM' // default value, you would fetch this based on ID
-      }
+      alarm: null,
+      loading: false,
     }
   },
   methods: {
     saveAlarm() {
-      console.log('Alarm saved:', this.alarm);
-      // Here you would typically save the alarm to your backend or state management
-    }
-  }
+      if (!this.alarm) {
+        return
+      }
+      api.createAlarm(this.alarm.time, this.alarm.label || undefined).then(() => {
+        this.$router.push({ name: ROUTE_NAMES.Alarms })
+      })
+    },
+  },
 }
 </script>
+<style scoped>
+.back {
+  margin: 20px 0;
+  display: inline-block;
+  color: var(--color-text-white);
+  text-decoration: none;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+}
+</style>
