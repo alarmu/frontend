@@ -26,11 +26,15 @@ jobs:
     - name: Upload production-ready build files
       uses: actions/upload-artifact@v4
       with:
+        name: build
         path: ./dist
+        if-no-files-found: error
+        include-hidden-files: true
 
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
+    needs: build
     steps:
     - name: Download artifact
       uses: actions/download-artifact@v4
@@ -43,15 +47,7 @@ jobs:
         server: "h51.netangels.ru"
         port: 22
         local_path: './*'
-        remote_path: '/home/c94618/alarmu.ru/app'
+        remote_path: '/home/c94618/alarmu.ru/www'
         sftp_only: true
         delete_remote_files: true
         ssh_private_key: ${{ secrets.SECRET }}
-    - name: Restart
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: "h51.netangels.ru"
-        username: "c94618"
-        key: ${{ secrets.SECRET }}
-        port: 22
-        script: cd /home/c94618/alarmu.ru/ && touch reload
