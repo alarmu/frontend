@@ -31,11 +31,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
+    needs: build
     steps:
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
         path: ./
+    - name: Display structure of downloaded files
+      run: ls -R
     - name: Upload
       uses: wlixcc/SFTP-Deploy-Action@v1.2.4
       with:
