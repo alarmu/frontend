@@ -1,32 +1,57 @@
 on: [push]
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
-        name: deploy
-        steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-        - name: Deploy
-          uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-          with:
-            username: "c94618"
-            server: "h51.netangels.ru"
-            port: 22
-            local_path: './*'
-            remote_path: '/home/c94618/alarmu.ru/app'
-            sftp_only: true
-            ssh_private_key: ${{ secrets.SECRET }}
-        - name: Install dependencies, build and reload
-          uses: appleboy/ssh-action@v1.0.3
-          with:
-            host: "h51.netangels.ru"
-            username: "c94618"
-            key: ${{ secrets.SECRET }}
-            port: 22
-            script:  |
-              export NVM_DIR=~/.nvm
-              source ~/.nvm/nvm.sh
-              cd /home/c94618/alarmu.ru/app && npm i
-              cd /home/c94618/alarmu.ru/app && npm run build
-              cd /home/c94618/alarmu.ru/ && touch reload
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Install dependencies
+      uses: bahmutov/npm-install@v1
+
+    - name: Build project
+      run: npm run build
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Upload production-ready build files
+      uses: actions/upload-artifact@v4
+      with:
+        path: ./dist
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        path: ./dist
+    - name: Upload
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      with:
+        username: "c94618"
+        server: "h51.netangels.ru"
+        port: 22
+        local_path: './build/*'
+        remote_path: '/home/c94618/alarmu.ru/app'
+        sftp_only: true
+        delete_remote_files: true
+        ssh_private_key: ${{ secrets.SECRET }}
+    - name: Restart
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: "h51.netangels.ru"
+        username: "c94618"
+        key: ${{ secrets.SECRET }}
+        port: 22
+        script: cd /home/c94618/alarmu.ru/ && touch reload
