@@ -1,60 +1,54 @@
-on: [push]
+name: Build and release
+  on: [push]
 
-jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
+  jobs:
+    build:
+      name: Build
+      runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout Repo
-      uses: actions/checkout@v4
+      steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-    - name: Install dependencies
-      uses: bahmutov/npm-install@v1
+      - name: Install dependencies
+        uses: bahmutov/npm-install@v1
 
-    - name: Build project
-      run: npm run build
+      - name: Build project
+        run: npm run build
 
-    - name: Lint
-      run: npm run lint
+      - name: Lint
+        run: npm run lint
 
-    - name: Upload production-ready build files
-      uses: actions/upload-artifact@v4
-      with:
-        path: ./dist
+      - name: Upload production-ready build files
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./dist
+          if-no-files-found: error
+          include-hidden-files: true
 
-  deploy:
-    runs-on: ubuntu-latest
-    name: Deploy
-    needs: build
-    steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        path: ./
-    - name: Display structure of downloaded files
-      run: ls -R
-    - name: Upload
-      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-      with:
-        username: "c94618"
-        server: "h51.netangels.ru"
-        port: 22
-        local_path: './*'
-        remote_path: '/home/c94618/alarmu.ru/app'
-        sftp_only: true
-        delete_remote_files: true
-        ssh_private_key: ${{ secrets.SECRET }}
-    - name: Restart
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: "h51.netangels.ru"
-        username: "c94618"
-        key: ${{ secrets.SECRET }}
-        port: 22
-        script: cd /home/c94618/alarmu.ru/ && touch reload
+    deploy:
+      runs-on: ubuntu-latest
+      name: Deploy
+      needs: build
+      steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: ./
+      - name: Upload
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          username: "c94618"
+          server: "h51.netangels.ru"
+          port: 22
+          local_path: './*'
+          remote_path: '/home/c94618/alarmu.ru/www'
+          sftp_only: true
+          delete_remote_files: true
+          ssh_private_key: ${{ secrets.SECRET }}
