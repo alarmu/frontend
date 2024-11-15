@@ -29,7 +29,7 @@ api.interceptors.response.use(response => {
 })
 
 const login = async (phone: string, code?: string): Promise<string> => {
-  return await api.post('/auth', {
+  return await api.post('/auth/login', {
     phone,
     code
   })
@@ -47,7 +47,7 @@ const getAlarm = async (id: string): Promise<Alarm> => {
 }
 
 const createAlarm = async (time: string, name?: string): Promise<Alarm> => {
-  return await api.post('/auth', {
+  return await api.post('/alarms', {
     time,
     name
   })
@@ -55,7 +55,7 @@ const createAlarm = async (time: string, name?: string): Promise<Alarm> => {
 }
 
 const updateAlarm = async (alarm: Alarm): Promise<Alarm> => {
-  return await api.post('/auth', alarm)
+  return await api.post('/alarms/'+ alarm.id, alarm)
     .then(res => (res.data.data))
 }
 

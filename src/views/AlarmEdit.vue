@@ -22,13 +22,14 @@ import { ROUTE_NAMES } from '@/router'
 import api from '@/api'
 import type { Alarm } from '@/types'
 import VSpinner from '@/components/VSpinner.vue'
+import { defineComponent } from 'vue'
 
 interface AlarmEditData {
   alarm: Alarm | null
   loading: boolean
 }
 
-export default {
+export default defineComponent({
   components: { VSpinner },
   computed: {
     ROUTE_NAMES() {
@@ -62,7 +63,7 @@ export default {
       })
     },
   },
-}
+})
 </script>
 <style scoped>
 .back {
