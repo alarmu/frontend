@@ -37,11 +37,7 @@ export const useAuthStore = defineStore(
     }
 
     const login = async (phone: string, code?: string) => {
-      try {
-        token.value = await api.login(phone, code)
-      } catch (error) {
-        return error
-      }
+      token.value = await api.login(phone, code)
     }
 
     return { login, isCodeSent, setIsCodeSent, token, isLoggedIn, user, removeToken }

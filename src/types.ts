@@ -1,6 +1,6 @@
 export interface Alarm {
   id: string
   time: string
-  label: string | null
+  name: string | null
   active: boolean
 }

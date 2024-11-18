@@ -58,7 +58,7 @@ export default defineComponent({
       if (!this.alarm) {
         return
       }
-      api.createAlarm(this.alarm.time, this.alarm.label || undefined).then(() => {
+      api.createAlarm(this.alarm.time, this.alarm.name || undefined).then(() => {
         this.$router.push({ name: ROUTE_NAMES.Alarms })
       })
     },

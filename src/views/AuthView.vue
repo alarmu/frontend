@@ -1,39 +1,56 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useTitle } from '@vueuse/core'
+import { useFocus, useTitle } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 import { ROUTE_NAMES } from '@/router'
 import axios from 'axios'
 import VSpinner from '@/components/VSpinner.vue'
+import { vMaska } from "maska/vue"
+import { isValidPhoneNumber } from 'libphonenumber-js'
 
 useTitle('Login')
 
-const { login, isCodeSent, setIsCodeSent } = useAuthStore()
+const authStore = useAuthStore()
 
 const router = useRouter();
 
-const phoneInputRef = ref()
+const phoneInputRef = ref<HTMLInputElement>()
+const codeInputRef = ref<HTMLInputElement>()
 const phone = ref('')
 const code = ref('')
 const loading = ref(false)
 const errorMessage = ref<string|null>(null)
+const toast = useToast();
+
+onMounted(() => {
+  if (authStore.isLoggedIn) {
+    router.push({ name: ROUTE_NAMES.Alarms })
+  }
+  useFocus(phoneInputRef, { initialValue: true })
+})
+
+const { focused: codeFocused } = useFocus(codeInputRef)
 
 const send = async () => {
   loading.value = true
+  if (authStore.isCodeSent) {
+    codeInputRef.value?.focus()
+  }
   try {
-    const authenticated = await login(phone.value, code.value)
-    if (isCodeSent && authenticated) {
+    await authStore.login(phone.value, code.value || undefined)
+    if (authStore.isCodeSent && authStore.isLoggedIn) {
+      toast.success("Success authorization")
       await router.push({ name: ROUTE_NAMES.Alarms })
     }
-    setIsCodeSent(true)
+    authStore.setIsCodeSent(true)
   } catch (e) {
     if (axios.isAxiosError(e)) {
-      if (e.response?.status === 400) {
-        errorMessage.value = e.response?.data?.error
-        return;
-      }
+
+      errorMessage.value = e.response?.data?.error
+      return;
     }
+    console.error(e)
 
     errorMessage.value = 'Authentication error, please try again.';
   } finally {
@@ -45,54 +62,52 @@ const resetError = () => {
   errorMessage.value = null
 }
 
-
 const isValid = computed(() => {
-  return phoneInputRef.value?.checkValidity()
+  return isValidPhoneNumber(phone.value, 'RU');
 })
+
+watch(
+  () => authStore.isCodeSent,
+  () => codeFocused.value = true
+)
 </script>
 
 <template>
   <div class="wrapper">
-    <form
-      class="container"
-      @submit.prevent="send"
-    >
-      <div class="title">
-        Login
-      </div>
+    <form class="container" @submit.prevent="send">
+      <div class="title">Login</div>
 
-      <div
-        v-if="errorMessage"
-        class="alert alert-danger"
-      >
+      <div v-if="errorMessage" class="alert warning">
         {{ errorMessage }}
       </div>
       <div class="fields">
         <div class="field">
           <input
-            ref="phoneInputRef"
             v-model="phone"
             type="tel"
             class="input"
-            placeholder="Phone number"
+            placeholder="+7 ### ###-##-##"
             autocomplete="tel"
+            v-maska="'+7 ### ###-##-##'"
             @input="resetError"
-          >
+            :disabled="authStore.isCodeSent"
+          />
         </div>
-        <div class="field" v-if="isCodeSent">
+        <div class="field" v-if="authStore.isCodeSent">
           <input
+            ref="codeInputRef"
             type="text"
             v-model="code"
             class="input"
             placeholder="Code"
             autocomplete="one-time-code"
             @input="resetError"
-          >
+          />
         </div>
       </div>
       <button
         type="submit"
-        :class="['button', 'login-button', {loading: loading}]"
+        :class="['button', 'login-button', { loading: loading }]"
         :disabled="loading || !isValid"
       >
         <VSpinner v-if="loading" />
@@ -129,7 +144,7 @@ const isValid = computed(() => {
   padding: 35px;
   border-radius: 16px;
   background: var(--color-island-bg);
-  animation: appear .3s;
+  animation: appear 0.3s;
   @media (max-width: 600px) {
     border-radius: 0;
     margin: 0;
@@ -168,8 +183,12 @@ const isValid = computed(() => {
 }
 
 @keyframes appear {
-  from { opacity: 0;}
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .alert {
@@ -181,7 +200,8 @@ const isValid = computed(() => {
   font-weight: 400;
   line-height: 24px;
   border-radius: 8px;
-  animation: appear .3s;
+  animation: appear 0.3s;
+  margin-bottom: 10px;
 }
 .alert.warning {
   border-color: #997404;

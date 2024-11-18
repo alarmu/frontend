@@ -2,6 +2,9 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import router, { ROUTE_NAMES } from '@/router'
 import type { Alarm } from '@/types'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast();
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/',
@@ -11,8 +14,8 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(function(config) {
-  const { token } = useAuthStore()
-  config.headers.Authorization = token
+  const store = useAuthStore()
+  config.headers.Authorization = 'Bearer ' + store.token
 
   return config
 })
@@ -20,30 +23,31 @@ api.interceptors.request.use(function(config) {
 api.interceptors.response.use(response => {
   return response;
 }, error => {
-  const {removeToken} = useAuthStore()
+  const store = useAuthStore()
   if (error.response?.status === 401) {
-    removeToken()
+    toast.warning('Token invalid, you logged out')
+    store.removeToken()
     router.push({ name: ROUTE_NAMES.Auth })
   }
   return error;
 })
 
 const login = async (phone: string, code?: string): Promise<string> => {
-  return await api.post('/auth/login', {
+  return await api.post<{access_token: string}>('/auth/login', {
     phone,
     code
   })
-    .then(res => (res.data.token))
+    .then(res => (res.data.access_token))
 }
 
 const getAlarms = async (): Promise<Alarm[]> => {
   return await api.get('/alarms')
-    .then(res => res.data?.data)
+    .then(res => res.data)
 }
 
 const getAlarm = async (id: string): Promise<Alarm> => {
   return await api.get('/alarms/' + id)
-    .then(res => res.data?.data)
+    .then(res => res.data)
 }
 
 const createAlarm = async (time: string, name?: string): Promise<Alarm> => {

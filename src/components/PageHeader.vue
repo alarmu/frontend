@@ -7,7 +7,7 @@ import { useRouter } from 'vue-router'
 import { ROUTE_NAMES } from '@/router'
 
 const router = useRouter();
-const {removeToken} = useAuthStore()
+const authStore = useAuthStore()
 
 const menuRef = ref(null)
 const userRef = ref(null)
@@ -21,7 +21,7 @@ const toggleMenu = () => {
 }
 
 const logout = async () => {
-  removeToken();
+  authStore.removeToken();
   await router.push({ name: ROUTE_NAMES.Landing })
 }
 </script>

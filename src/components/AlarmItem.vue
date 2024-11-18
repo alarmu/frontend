@@ -1,53 +1,37 @@
-vue
 <template>
-  <div class="alarm-item">
+  <router-link class="alarm-item" :to="{name: ROUTE_NAMES.Alarm, params: {id: props.alarm.id}}">
     <div class="alarm-details">
       <h2 class="alarm-time">{{ formattedTime }}</h2>
-      <p class="alarm-label">{{ label }}</p>
+      <p class="alarm-label">{{ props.alarm.name }}</p>
     </div>
-    <div class="alarm-toggle" @click="toggleActive">
-      <input type="checkbox" v-model="isActive" />
-      <span class="toggle-slider" :class="{ active: isActive }"></span>
+    <div class="alarm-toggle" @click.prevent="toggleActive">
+      <input type="checkbox" :value="props.alarm.active" />
+      <span class="toggle-slider" :class="{ active: props.alarm.active }"></span>
     </div>
-  </div>
+  </router-link>
 </template>
 
-<script lang="ts">
-export default {
-  name: "AlarmItem",
-  props: {
-    time: {
-      type: String,
-      required: true
-    },
-    label: {
-      type: String,
-      required: false,
-      default: "Alarm"
-    },
-    active: {
-      type: Boolean,
-      default: false
-    }
-  },
-  data() {
-    return {
-      isActive: this.active
-    };
-  },
-  computed: {
-    formattedTime() {
-      const date = new Date(`1970-01-01T${this.time}:00`);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-  },
-  methods: {
-    toggleActive() {
-      this.isActive = !this.isActive;
-      this.$emit('update:active', this.isActive);
-    }
-  }
-};
+<script lang="ts" setup>
+import { computed } from 'vue'
+import { useAppStore } from '@/stores/app'
+import type { Alarm } from '@/types'
+import { ROUTE_NAMES } from '@/router'
+
+interface Props {
+  alarm: Alarm
+}
+
+const props = defineProps<Props>()
+
+const formattedTime = computed(() =>  {
+  const date = new Date(`1970-01-01T${props.alarm.time}`);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+})
+
+const store = useAppStore()
+const toggleActive = () => {
+  store.setAlarmState(props.alarm.id, !props.alarm.active);
+}
 </script>
 
 <style scoped>
@@ -61,6 +45,8 @@ export default {
   background-color: var(--color-element-bg);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   transition: background-color 0.3s;
+  text-decoration: none;
+  color: #fff
 }
 
 .alarm-item:hover {

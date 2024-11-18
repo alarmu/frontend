@@ -3,18 +3,15 @@
     <div class="header">
       <h1>My Alarms</h1>
       <div class="buttons">
-        <button class="button">New alarm</button>
+        <button class="button" @click="$router.push({name: ROUTE_NAMES.Alarm})">New alarm</button>
       </div>
     </div>
 
     <div class="alarms">
       <AlarmItem
-        v-for="alarm in alarms"
+        v-for="alarm in store.alarms"
         :key="alarm.id"
-        :time="alarm.time"
-        :label="alarm.label ?? undefined"
-        :active="alarm.active"
-        @update:active="(value) => updateAlarm(alarm.id, value)"
+        :alarm="alarm"
       />
     </div>
   </div>
@@ -40,14 +37,15 @@
 <script lang="ts" setup>
 import AlarmItem from '@/components/AlarmItem.vue'
 import { useAppStore } from '@/stores/app'
-import { computed } from 'vue'
+import { onMounted } from 'vue'
+import { useTitle } from '@vueuse/core'
+import { ROUTE_NAMES } from '@/router'
+
+useTitle('My alarms')
 
 const store = useAppStore()
-const alarms = computed(() => store.alarms)
 
-store.getAlarms()
-
-const updateAlarm = (id: string, value: boolean) => {
-  store.setAlarmState(id, value);
-}
+onMounted(() => {
+  store.getAlarms()
+})
 </script>
